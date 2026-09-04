@@ -602,6 +602,7 @@
     btn.dataset.pose = key;
     btn.setAttribute("aria-pressed", "false");
     btn.innerHTML = `<span class="sprite" aria-hidden="true"></span><span class="pose-name">${label}</span>`;
+    gallery.appendChild(btn);
     setPose(btn.querySelector(".sprite"), key);
 
     btn.addEventListener("click", () => {
@@ -610,8 +611,6 @@
       setPose(heroSprite, key);
       selectedLabel.textContent = label;
     });
-
-    gallery.appendChild(btn);
   });
 
   // Defaults
