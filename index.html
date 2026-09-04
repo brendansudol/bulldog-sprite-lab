@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bulldog Sprite Lab</title>
+<style>
+  :root {
+    --bg: #17191f;
+    --panel: #22252d;
+    --panel-2: #2a2e37;
+    --text: #f4efe8;
+    --muted: #aaaeb9;
+    --red: #d62424;
+    --red-2: #a91616;
+    --cream: #f2e6d4;
+    --line: #3a3e49;
+    --shadow: 0 16px 40px rgba(0,0,0,.28);
+  }
+
+  * { box-sizing: border-box; }
+  html { color-scheme: dark; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--text);
+    background:
+      radial-gradient(circle at 20% -10%, rgba(214,36,36,.18), transparent 32rem),
+      linear-gradient(180deg, #15171c, var(--bg));
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  }
+
+  button, input { font: inherit; }
+
+  .shell {
+    width: min(1180px, calc(100% - 28px));
+    margin: 0 auto;
+    padding: 32px 0 80px;
+  }
+
+  header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px;
+    align-items: end;
+    margin-bottom: 22px;
+  }
+
+  .eyebrow {
+    color: #ff6c62;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    font-size: 12px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(30px, 5vw, 56px);
+    line-height: .98;
+    letter-spacing: -.055em;
+  }
+
+  .intro {
+    margin: 12px 0 0;
+    color: var(--muted);
+    max-width: 720px;
+    line-height: 1.6;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  .badge {
+    align-self: start;
+    border: 1px solid var(--line);
+    background: #1d2026;
+    color: #d6d8de;
+    padding: 9px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1.06fr .94fr;
+    gap: 18px;
+  }
+
+  .panel {
+    background: linear-gradient(180deg, rgba(255,255,255,.025), transparent), var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .panel-head {
+    padding: 18px 20px 12px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .panel h2 {
+    margin: 0;
+    font-size: 15px;
+    letter-spacing: -.02em;
+  }
+
+  .panel small { color: var(--muted); }
+  /* -------- Sprite component -------- */
+  .sprite {
+    --size: 96px;
+    display: inline-block;
+    width: var(--size);
+    height: var(--size);
+    flex: 0 0 auto;
+    overflow: hidden;
+    background-image: url("./assets/bulldog-sprite-sheet.png");
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    image-rendering: pixelated;
+  }
+
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 9px;
+    padding: 8px 14px 16px;
+  }
+
+  .pose {
+    appearance: none;
+    border: 1px solid transparent;
+    color: inherit;
+    cursor: pointer;
+    border-radius: 14px;
+    background: #1c1f26;
+    min-height: 142px;
+    padding: 10px 6px 8px;
+    transition: .16s ease;
+  }
+
+  .pose:hover {
+    transform: translateY(-2px);
+    border-color: #4b505c;
+    background: #252933;
+  }
+
+  .pose[aria-pressed="true"] {
+    border-color: #ff5147;
+    background: #2c2326;
+    box-shadow: inset 0 0 0 1px rgba(255,81,71,.16);
+  }
+
+  .pose .sprite { --size: 96px; display: block; margin: 0 auto 5px; }
+  .pose-name {
+    color: #dfe1e6;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+
+  .playground {
+    min-height: 100%;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+  }
+
+  .stage {
+    margin: 4px 16px 16px;
+    min-height: 360px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #343843;
+    background: #15171d;
+  }
+
+  .stage.checker {
+    background-color: #eee;
+    background-image:
+      linear-gradient(45deg, #d8d8d8 25%, transparent 25%),
+      linear-gradient(-45deg, #d8d8d8 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #d8d8d8 75%),
+      linear-gradient(-45deg, transparent 75%, #d8d8d8 75%);
+    background-size: 24px 24px;
+    background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+  }
+
+  #heroSprite {
+    --size: 210px;
+    transition: transform .15s ease;
+    filter: drop-shadow(0 16px 15px rgba(0,0,0,.25));
+  }
+
+  .stage:hover #heroSprite { transform: translateY(-3px); }
+
+  .controls {
+    display: grid;
+    gap: 14px;
+    border-top: 1px solid var(--line);
+    padding: 16px 18px 18px;
+    background: #1c1f25;
+  }
+
+  .control-row {
+    display: grid;
+    grid-template-columns: 110px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+  }
+
+  label { color: var(--muted); }
+  input[type="range"] { width: 100%; accent-color: var(--red); }
+
+  .pill {
+    border: 1px solid var(--line);
+    background: #282c35;
+    color: #e5e6ea;
+    border-radius: 999px;
+    padding: 7px 10px;
+    cursor: pointer;
+  }
+  .pill:hover { border-color: #606672; }
+
+  .wide {
+    grid-column: 1 / -1;
+  }
+
+  .section {
+    margin-top: 18px;
+  }
+
+  .state-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    padding: 8px 14px 16px;
+  }
+
+  .state-card {
+    min-height: 180px;
+    border-radius: 14px;
+    background: #1b1e24;
+    border: 1px solid #333740;
+    padding: 14px;
+    display: grid;
+    align-content: space-between;
+    gap: 10px;
+  }
+
+  .state-card .sprite { --size: 108px; justify-self: center; }
+  .state-card strong { font-size: 12px; }
+  .state-card p {
+    margin: 4px 0 0;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--muted);
+    font-family: system-ui, sans-serif;
+  }
+
+  .demo-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-top: 18px;
+  }
+
+  .interactive {
+    min-height: 310px;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+  }
+
+  .bulldog-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    appearance: none;
+    border: 0;
+    color: white;
+    background: transparent;
+    cursor: pointer;
+  }
+  .bulldog-button .sprite {
+    --size: 150px;
+    filter: drop-shadow(0 14px 12px rgba(0,0,0,.3));
+    transition: transform .12s ease;
+  }
+  .bulldog-button:hover .sprite { transform: translateY(-5px) scale(1.03); }
+  .bulldog-button > span:not(.sprite) {
+    background: linear-gradient(#e2362e, #b51515);
+    border: 1px solid #ff635a;
+    border-bottom-color: #7d0d0d;
+    padding: 10px 15px;
+    border-radius: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    box-shadow: 0 5px 0 #721010;
+  }
+  .bulldog-button:active > span:not(.sprite) { transform: translateY(3px); box-shadow: 0 2px 0 #721010; }
+
+  .anim-wrap {
+    min-height: 310px;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 14px;
+    padding: 24px;
+  }
+  #animSprite {
+    --size: 160px;
+    filter: drop-shadow(0 14px 12px rgba(0,0,0,.3));
+  }
+  .anim-controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .code {
+    padding: 0 14px 16px;
+  }
+  pre {
+    margin: 0;
+    padding: 16px;
+    border-radius: 14px;
+    overflow: auto;
+    border: 1px solid #343843;
+    background: #111318;
+    color: #e7e2d9;
+    font-size: 12px;
+    line-height: 1.55;
+    tab-size: 2;
+  }
+  .kw { color: #ff776f; }
+  .str { color: #e5c07b; }
+  .com { color: #727986; }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translate(-50%, 20px);
+    opacity: 0;
+    pointer-events: none;
+    background: #f2e6d4;
+    color: #201f1e;
+    border: 3px solid #18191d;
+    box-shadow: 0 9px 0 #0d0e11, 0 18px 35px rgba(0,0,0,.35);
+    padding: 11px 16px;
+    border-radius: 10px;
+    font-weight: 800;
+    font-size: 13px;
+    transition: .2s ease;
+    z-index: 10;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  footer {
+    margin-top: 22px;
+    text-align: center;
+    color: #7e838e;
+    font-size: 11px;
+  }
+
+  @media (max-width: 860px) {
+    header { grid-template-columns: 1fr; }
+    .badge { display: none; }
+    .grid, .demo-row { grid-template-columns: 1fr; }
+    .state-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 540px) {
+    .gallery { grid-template-columns: repeat(3, 1fr); }
+    .pose .sprite { --size: 78px; }
+    .pose { min-height: 124px; }
+    .state-grid { grid-template-columns: 1fr 1fr; }
+    .control-row { grid-template-columns: 80px 1fr auto; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <div>
+      <div class="eyebrow">2.5D pixel mascot system</div>
+      <h1>Bulldog Sprite Lab</h1>
+      <p class="intro">
+        A lightweight prototype showing one sprite sheet used as a reusable web-app mascot:
+        selectable reactions, responsive sizing, UI states, hover/click interactions, and simple frame animation.
+      </p>
+    </div>
+    <div class="badge">1536×1152 · 4×3 · 384px cells</div>
+  </header>
+
+  <main>
+    <div class="grid">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>01 / Pick a reaction</h2>
+          <small>Click any pose</small>
+        </div>
+        <div class="gallery" id="gallery"></div>
+      </section>
+
+      <section class="panel playground">
+        <div class="panel-head">
+          <h2>02 / Live playground</h2>
+          <small id="selectedLabel">thumbs up</small>
+        </div>
+
+        <div class="stage" id="stage">
+          <span class="sprite" id="heroSprite" role="img" aria-label="Bulldog mascot"></span>
+        </div>
+
+        <div class="controls">
+          <div class="control-row">
+            <label for="sizeRange">Sprite size</label>
+            <input id="sizeRange" type="range" min="48" max="280" step="2" value="210" />
+            <output id="sizeOutput">210px</output>
+          </div>
+
+          <div class="control-row">
+            <label>Preview</label>
+            <button class="pill" id="bgToggle" type="button">Checkerboard</button>
+            <button class="pill" id="resetBtn" type="button">Reset</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel section">
+      <div class="panel-head">
+        <h2>03 / App-state reactions</h2>
+        <small>One mascot component, different semantic states</small>
+      </div>
+
+      <div class="state-grid">
+        <div class="state-card">
+          <span class="sprite" data-pose="running"></span>
+          <div><strong>Loading</strong><p>Use a running pose while work is happening.</p></div>
+        </div>
+        <div class="state-card">
+          <span class="sprite" data-pose="thumbsUp"></span>
+          <div><strong>Success</strong><p>A positive confirmation after a completed action.</p></div>
+        </div>
+        <div class="state-card">
+          <span class="sprite" data-pose="confused"></span>
+          <div><strong>Error / Help</strong><p>A friendly reaction when something needs attention.</p></div>
+        </div>
+        <div class="state-card">
+          <span class="sprite" data-pose="sad"></span>
+          <div><strong>Empty state</strong><p>Useful when there is no content yet.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="demo-row">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>04 / Hover + click</h2>
+          <small>wave → love → flex</small>
+        </div>
+        <div class="interactive">
+          <button class="bulldog-button" id="dogButton" type="button">
+            <span class="sprite" id="buttonSprite" aria-hidden="true"></span>
+            <span>Go Dawgs!</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>05 / Simple animation</h2>
+          <small>cycling existing reaction frames</small>
+        </div>
+        <div class="anim-wrap">
+          <span class="sprite" id="animSprite" role="img" aria-label="Animated bulldog mascot"></span>
+          <div class="anim-controls">
+            <button class="pill" id="playPause" type="button">Pause</button>
+            <label for="speedRange">Speed</label>
+            <input id="speedRange" type="range" min="160" max="900" value="420" step="20" />
+            <output id="speedOut">420ms</output>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel section">
+      <div class="panel-head">
+        <h2>06 / Core React idea</h2>
+        <small>The sprite sheet behaves like an icon component</small>
+      </div>
+      <div class="code">
+<pre><span class="kw">const</span> POSES = {
+  angry: 0, cheer: 1, love: 2, running: 3,
+  thumbsUp: 4, surprised: 5, sleepy: 6, dancing: 7,
+  wave: 8, confused: 9, sad: 10, flex: 11
+};
+
+<span class="kw">function</span> BulldogSprite({ pose = <span class="str">"wave"</span>, size = 96 }) {
+  <span class="kw">const</span> index = POSES[pose];
+  <span class="kw">const</span> col = index % 4;
+  <span class="kw">const</span> row = Math.floor(index / 4);
+
+  <span class="kw">return</span> &lt;span style={{
+    width: size,
+    height: size,
+    backgroundImage: <span class="str">'url("/assets/bulldog-sprite-sheet.png")'</span>,
+    backgroundSize: <span class="str">"400% 300%"</span>,
+    backgroundPosition: `${(col / 3) * 100}% ${(row / 2) * 100}%`,
+    imageRendering: <span class="str">"pixelated"</span>
+  }} /&gt;;
+}
+
+<span class="com">// Then anywhere in the app:</span>
+&lt;BulldogSprite pose=<span class="str">"thumbsUp"</span> size={96} /&gt;</pre>
+      </div>
+    </section>
+  </main>
+
+  <footer>Static demo · 384×384 cells keep every pose fully isolated.</footer>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite">Achievement unlocked: GO DAWGS!</div>
+
+<script>
+  const POSES = [
+    ["angry", "confident"],
+    ["cheer", "cheer"],
+    ["love", "love"],
+    ["running", "running"],
+    ["thumbsUp", "thumbs up"],
+    ["surprised", "surprised"],
+    ["sleepy", "sleepy"],
+    ["dancing", "dancing"],
+    ["wave", "wave"],
+    ["confused", "confused"],
+    ["sad", "sad"],
+    ["flex", "flex"]
+  ];
+
+  const COLS = 4;
+  const ROWS = 3;
+
+  function getPoseIndex(name) {
+    const index = POSES.findIndex(([key]) => key === name);
+    return Math.max(0, index);
+  }
+
+  function renderSprite(el) {
+    const name = el.dataset.currentPose || el.dataset.pose;
+    if (!name) return;
+
+    const index = getPoseIndex(name);
+    const col = index % COLS;
+    const row = Math.floor(index / COLS);
+
+    const rect = el.getBoundingClientRect();
+    const size = Math.round(Math.min(rect.width, rect.height));
+
+    if (!size) return;
+
+    el.style.backgroundSize = `${size * COLS}px ${size * ROWS}px`;
+    el.style.backgroundPosition = `${-col * size}px ${-row * size}px`;
+  }
+
+  function setPose(el, name) {
+    el.dataset.currentPose = name;
+    renderSprite(el);
+  }
+
+  function rerenderAllSprites() {
+    document.querySelectorAll(".sprite").forEach(renderSprite);
+  }
+
+// Gallery
+  const gallery = document.querySelector("#gallery");
+  const heroSprite = document.querySelector("#heroSprite");
+  const selectedLabel = document.querySelector("#selectedLabel");
+
+  POSES.forEach(([key, label]) => {
+    const btn = document.createElement("button");
+    btn.className = "pose";
+    btn.type = "button";
+    btn.dataset.pose = key;
+    btn.setAttribute("aria-pressed", "false");
+    btn.innerHTML = `<span class="sprite" aria-hidden="true"></span><span class="pose-name">${label}</span>`;
+    setPose(btn.querySelector(".sprite"), key);
+
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".pose").forEach(b => b.setAttribute("aria-pressed", "false"));
+      btn.setAttribute("aria-pressed", "true");
+      setPose(heroSprite, key);
+      selectedLabel.textContent = label;
+    });
+
+    gallery.appendChild(btn);
+  });
+
+  // Defaults
+  const defaultPose = "thumbsUp";
+  const defaultButton = [...document.querySelectorAll(".pose")].find(b => b.dataset.pose === defaultPose);
+  defaultButton?.setAttribute("aria-pressed", "true");
+  setPose(heroSprite, defaultPose);
+
+  // Static state cards
+  document.querySelectorAll("[data-pose].sprite").forEach(el => setPose(el, el.dataset.pose));
+
+  // Playground controls
+  const sizeRange = document.querySelector("#sizeRange");
+  const sizeOutput = document.querySelector("#sizeOutput");
+  sizeRange.addEventListener("input", () => {
+    heroSprite.style.setProperty("--size", sizeRange.value + "px");
+    sizeOutput.textContent = sizeRange.value + "px";
+  });
+
+  document.querySelector("#bgToggle").addEventListener("click", (e) => {
+    const stage = document.querySelector("#stage");
+    stage.classList.toggle("checker");
+    e.currentTarget.textContent = stage.classList.contains("checker") ? "Dark preview" : "Checkerboard";
+  });
+
+  document.querySelector("#resetBtn").addEventListener("click", () => {
+    sizeRange.value = 210;
+    sizeRange.dispatchEvent(new Event("input"));
+    defaultButton?.click();
+    document.querySelector("#stage").classList.remove("checker");
+    document.querySelector("#bgToggle").textContent = "Checkerboard";
+  });
+
+  // Interactive mascot button
+  const dogButton = document.querySelector("#dogButton");
+  const buttonSprite = document.querySelector("#buttonSprite");
+  setPose(buttonSprite, "wave");
+
+  dogButton.addEventListener("mouseenter", () => setPose(buttonSprite, "love"));
+  dogButton.addEventListener("mouseleave", () => setPose(buttonSprite, "wave"));
+  dogButton.addEventListener("focus", () => setPose(buttonSprite, "love"));
+  dogButton.addEventListener("blur", () => setPose(buttonSprite, "wave"));
+  dogButton.addEventListener("click", () => {
+    setPose(buttonSprite, "flex");
+    const toast = document.querySelector("#toast");
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 1700);
+    setTimeout(() => {
+      if (!dogButton.matches(":hover") && document.activeElement !== dogButton) setPose(buttonSprite, "wave");
+    }, 700);
+  });
+
+  // Simple frame cycling
+  const animSprite = document.querySelector("#animSprite");
+  const animFrames = ["wave", "cheer", "dancing", "flex", "thumbsUp", "love"];
+  let animIndex = 0;
+  let speed = 420;
+  let playing = true;
+  let timer;
+
+  function scheduleAnimation() {
+    clearInterval(timer);
+    if (!playing) return;
+    timer = setInterval(() => {
+      animIndex = (animIndex + 1) % animFrames.length;
+      setPose(animSprite, animFrames[animIndex]);
+    }, speed);
+  }
+
+  setPose(animSprite, animFrames[0]);
+  scheduleAnimation();
+
+  window.addEventListener("resize", () => {
+    window.requestAnimationFrame(rerenderAllSprites);
+  });
+
+
+  const playPause = document.querySelector("#playPause");
+  playPause.addEventListener("click", () => {
+    playing = !playing;
+    playPause.textContent = playing ? "Pause" : "Play";
+    scheduleAnimation();
+  });
+
+  const speedRange = document.querySelector("#speedRange");
+  const speedOut = document.querySelector("#speedOut");
+  speedRange.addEventListener("input", () => {
+    speed = Number(speedRange.value);
+    speedOut.textContent = speed + "ms";
+    scheduleAnimation();
+  });
+</script>
+</body>
+</html>
